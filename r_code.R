@@ -31,25 +31,7 @@ library(fields)
 library(colorRamps) 
 library(rworldmap)
 
-###################################################
-# extents
-###################################################
-# extent Italy
-#state.map3 <- readShapeSpatial("data/ITA_adm1")
-#e<-extent(c(6.630879, 18.52069, 35.49292, 47.09096))
-
-# extent Ukraine
-#state.map3 <- readShapeSpatial("data/UKR_adm1")
-#e<-c(extent(state.map3)[1:4])
-
-# Moldavao
-#state.map3 <- readShapeSpatial("data/MDA_adm1")
-#e<-c(extent(state.map3)[1:4])
-
-#state.map3 <- readShapeSpatial("data/DEU_adm1")
-#e<-c(extent(state.map3)[1:4])
-
-
+# function to convert *.nc to raster
 temp_func <- function(nc, start_dataset = '1950-01-01',
                       year_start, day_start = "-01-01",
                       year_end = year_start, day_end = "-12-31",
@@ -69,15 +51,16 @@ temp_func <- function(nc, start_dataset = '1950-01-01',
   tfull2=which(times==time.e)
   dt = t2-t1+1
   
-  afi<-get.var.ncdf(nc, var,start=c(1,1,t1), count=c(-1,-1,dt))
+  afi<-get.var.ncdf(nc, var,start=c(1, 1, t1), count=c(-1, -1, dt))
   
-  nc$dim$longitude$vals -> lon
-  nc$dim$latitude$vals -> lat
+  lon <- nc$dim$longitude$vals
+  lat <- nc$dim$latitude$vals
   
-  TEST<-lapply(1:dt, function(x)  m <-   t((afi[,,x])))
-  TEST1<-lapply(TEST, function(x) x[nrow(x):1,])
-  TEST2<-lapply(TEST1, function(x) raster(x,xmn=min(lon),xmx=max(lon),ymn=min(lat),ymx=max(lat)))
+  TEST <- lapply(1:dt, function(x)  m <-   t((afi[,,x])))
+  TEST1 <- lapply(TEST, function(x) x[nrow(x):1,])
+  TEST2 <- lapply(TEST1, function(x) raster(x,xmn=min(lon),xmx=max(lon),ymn=min(lat),ymx=max(lat)))
   
+  # crop the raster if an extent is present
   if(sum(extent_v) > 0  | sum(extent_v) < 0){
     TEST3<-lapply(TEST2, function(x) crop(x, extent_v))
     brick(unlist(TEST3))
@@ -88,11 +71,11 @@ temp_func <- function(nc, start_dataset = '1950-01-01',
 
 
 #============================================================
-# daily mean temperature until 2015
+# loop through years to convert *.nc to raster
 #============================================================
 
-# loop through years
 for(i in 1950:2015){
+  
   # convert *.nc to raster
   data <- temp_func(open.ncdf("data/tg_0.25deg_reg_v13.0.nc"),
                     year_start = i)
